@@ -10,6 +10,7 @@
 #include "atom/browser/api/atom_api_system_preferences.h"
 #include "atom/common/native_mate_converters/accelerator_converter.h"
 #include "atom/common/native_mate_converters/callback.h"
+#include "base/mac/mac_util.h"
 #include "base/stl_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "native_mate/dictionary.h"
@@ -42,19 +43,19 @@ void GlobalShortcut::OnKeyPressed(const ui::Accelerator& accelerator) {
 }
 
 bool RegisteringMediaKeyForUntrustedClient(const ui::Accelerator& accelerator) {
-#if defined(MAC_OS_X_VERSION_10_14)
-  std::vector<std::string> mediaKeys = {"Media Play/Pause", "Media Next Track",
-                                        "Media Previous Track"};
-  std::string shortcutText = base::UTF16ToUTF8(accelerator.GetShortcutText());
+  if (base::mac::IsAtLeastOS10_14()) {
+    std::vector<std::string> mediaKeys = {
+        "Media Play/Pause", "Media Next Track", "Media Previous Track"};
+    std::string shortcutText = base::UTF16ToUTF8(accelerator.GetShortcutText());
 
-  if (std::find(mediaKeys.begin(), mediaKeys.end(), shortcutText) !=
-      mediaKeys.end()) {
-    SystemPreferences* sys = nullptr;
-    bool trusted = sys->IsTrustedAccessibilityClient(false);
-    if (!trusted)
-      return true;
+    if (std::find(mediaKeys.begin(), mediaKeys.end(), shortcutText) !=
+        mediaKeys.end()) {
+      SystemPreferences* sys = nullptr;
+      bool trusted = sys->IsTrustedAccessibilityClient(false);
+      if (!trusted)
+        return true;
+    }
   }
-#endif
   return false;
 }
 
