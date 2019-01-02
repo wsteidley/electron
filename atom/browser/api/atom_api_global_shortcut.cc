@@ -34,30 +34,38 @@ void GlobalShortcut::OnKeyPressed(const ui::Accelerator& accelerator) {
   if (accelerator_callback_map_.find(accelerator) ==
       accelerator_callback_map_.end()) {
     // This should never occur, because if it does, GlobalGlobalShortcutListener
-    // notifes us with wrong accelerator.
+    // notifies us with wrong accelerator.
     NOTREACHED();
     return;
   }
   accelerator_callback_map_[accelerator].Run();
 }
 
+bool RegisteringMediaKeyForUntrustedClient(const ui::Accelerator& accelerator) {
+  std::vector<std::string> mediaKeys = {"Media Play/Pause", "Media Next Track",
+                                        "Media Previous Track"};
+  std::string shortcutText = base::UTF16ToUTF8(accelerator.GetShortcutText());
+
+  if (std::find(mediaKeys.begin(), mediaKeys.end(), shortcutText) !=
+      mediaKeys.end()) {
+    SystemPreferences* sys = nullptr;
+    bool trusted = sys->IsTrustedAccessibilityClient(false);
+    if (!trusted)
+      return true;
+  }
+  return false;
+}
+
 bool GlobalShortcut::RegisterAll(
     const std::vector<ui::Accelerator>& accelerators,
     const base::Closure& callback) {
   std::vector<ui::Accelerator> registered;
-  std::vector<std::string> mediaKeys = {"Media Play/Pause", "Media Next Track",
-                                        "Media Previous Track"};
 
   for (auto& accelerator : accelerators) {
 #if defined(OS_MACOSX)
-    std::string shortcutText = base::UTF16ToUTF8(accelerator.GetShortcutText());
-    if (std::find(mediaKeys.begin(), mediaKeys.end(), shortcutText) !=
-        mediaKeys.end()) {
-      SystemPreferences* sys = nullptr;
-      bool trusted = sys->IsTrustedAccessibilityClient(false);
-      if (!trusted)
-        return false;
-    }
+    if (RegisteringMediaKeyForUntrustedClient(accelerator))
+      return false;
+
     GlobalShortcutListener* listener = GlobalShortcutListener::GetInstance();
     if (!listener->RegisterAccelerator(accelerator, this)) {
       // unregister all shortcuts if any failed
@@ -74,17 +82,8 @@ bool GlobalShortcut::RegisterAll(
 bool GlobalShortcut::Register(const ui::Accelerator& accelerator,
                               const base::Closure& callback) {
 #if defined(OS_MACOSX)
-  std::vector<std::string> mediaKeys = {"Media Play/Pause", "Media Next Track",
-                                        "Media Previous Track"};
-  std::string shortcutText = base::UTF16ToUTF8(accelerator.GetShortcutText());
-
-  if (std::find(mediaKeys.begin(), mediaKeys.end(), shortcutText) !=
-      mediaKeys.end()) {
-    SystemPreferences* sys = nullptr;
-    bool trusted = sys->IsTrustedAccessibilityClient(false);
-    if (!trusted)
-      return false;
-  }
+  if (RegisteringMediaKeyForUntrustedClient(accelerator))
+    return false;
 #endif
 
   if (!GlobalShortcutListener::GetInstance()->RegisterAccelerator(accelerator,
