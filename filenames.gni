@@ -65,6 +65,7 @@ filenames = {
     "lib/common/web-view-methods.js",
     "lib/renderer/callbacks-registry.js",
     "lib/renderer/chrome-api.js",
+    "lib/renderer/command-line.js",
     "lib/renderer/content-scripts-injector.js",
     "lib/renderer/init.js",
     "lib/renderer/inspector.js",
