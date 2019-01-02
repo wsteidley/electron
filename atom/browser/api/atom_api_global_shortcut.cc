@@ -42,6 +42,7 @@ void GlobalShortcut::OnKeyPressed(const ui::Accelerator& accelerator) {
 }
 
 bool RegisteringMediaKeyForUntrustedClient(const ui::Accelerator& accelerator) {
+#if defined(MAC_OS_X_VERSION_10_14)
   std::vector<std::string> mediaKeys = {"Media Play/Pause", "Media Next Track",
                                         "Media Previous Track"};
   std::string shortcutText = base::UTF16ToUTF8(accelerator.GetShortcutText());
@@ -53,6 +54,7 @@ bool RegisteringMediaKeyForUntrustedClient(const ui::Accelerator& accelerator) {
     if (!trusted)
       return true;
   }
+#endif
   return false;
 }
 
